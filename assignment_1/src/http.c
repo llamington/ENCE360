@@ -14,7 +14,7 @@
 #define HTTP_GET_FMT "GET /%s HTTP/1.0\r\n" \
                      "Host: %s\r\n"         \
                      "User-Agent: getter\r\n\r\n"
-#define HTTP_HEADER_LEN 49 // length of http get template including null byte
+#define HTTP_HEADER_LEN 47 // length of http get template including null byte
 
 Buffer *http_query(char *host, char *page, int port)
 {
@@ -54,7 +54,7 @@ Buffer *http_query(char *host, char *page, int port)
     size_t header_len = HTTP_HEADER_LEN + strlen(host) + strlen(page);
     char *get_req = malloc(header_len);
     sprintf(get_req, HTTP_GET_FMT, page, host);
-    if (write(sockfd, get_req, header_len) == -1)
+    if (write(sockfd, get_req, header_len - 1) == -1)
     {
         perror("write");
         exit(EXIT_FAILURE);
@@ -76,7 +76,7 @@ Buffer *http_query(char *host, char *page, int port)
         }
         ret->length += s;
     } while (s > 0);
-
+    memset(ret->data + ret->length, 0, ret->length % BUF_SIZE); // pad the data with zeros
     return ret;
 }
 
@@ -121,5 +121,7 @@ int main(int argc, char *argv[])
 {
     Buffer *res = http_query(argv[1], argv[2], 80);
     printf("Response:\n%s", res->data);
+    free(res->data);
+    free(res);
     return 0;
 }
