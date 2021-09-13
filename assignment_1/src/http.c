@@ -61,7 +61,7 @@ Buffer *http_query(char *host, char *page, int port)
     }
     free(get_req);
 
-    // return response
+    // store response
     Buffer *ret = malloc(sizeof(Buffer));
     ret->data = malloc(0);
     ret->length = 0;
@@ -77,7 +77,6 @@ Buffer *http_query(char *host, char *page, int port)
         ret->length += s;
     } while (s > 0);
 
-    ret->length = s;
     return ret;
 }
 
