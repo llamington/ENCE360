@@ -11,11 +11,13 @@
 
 #define BUF_SIZE 1024
 #define MAX_PORT_LEN 6 // maximum character length of a port including null byte
+#define HTTP_GET_FMT "GET /%s HTTP/1.0\r\n" \
+                     "Host: %s\r\n"         \
+                     "User-Agent: getter\r\n\r\n"
+#define HTTP_HEADER_LEN 49 // length of http get template including null byte
 
 Buffer *http_query(char *host, char *page, int port)
 {
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     // initialise server hints
     struct addrinfo server_hints;
     memset(&server_hints, 0, sizeof(server_hints));
@@ -41,11 +43,33 @@ Buffer *http_query(char *host, char *page, int port)
     }
 
     // connect to server
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (connect(sockfd, server_addr->ai_addr, server_addr->ai_addrlen) == -1)
     {
         perror("connect");
         exit(EXIT_FAILURE);
     }
+
+    // send GET request
+    size_t header_len = HTTP_HEADER_LEN + strlen(host) + strlen(page);
+    char *get_req = malloc(header_len);
+    sprintf(get_req, HTTP_GET_FMT, page, host);
+    if (write(sockfd, get_req, header_len) == -1)
+    {
+        perror("write");
+        exit(EXIT_FAILURE);
+    }
+
+    // return response
+    Buffer *ret = malloc(sizeof(Buffer));
+    s = read(sockfd, ret->data, (size_t)1e6);
+    if (s == -1)
+    {
+        perror("read");
+        exit(EXIT_FAILURE);
+    }
+    ret->length = s;
+    return ret;
 }
 
 // split http content from the response string
@@ -85,7 +109,8 @@ Buffer *http_url(const char *url)
     }
 }
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
+    Buffer *res = http_query(argv[1], argv[2], 80);
     return 0;
 }
