@@ -49,6 +49,7 @@ Buffer *http_query(char *host, char *page, int port)
         perror("connect");
         exit(EXIT_FAILURE);
     }
+    freeaddrinfo(server_addr);
 
     // send GET request
     size_t header_len = HTTP_HEADER_LEN + strlen(host) + strlen(page);
