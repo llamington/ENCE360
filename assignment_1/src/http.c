@@ -121,6 +121,6 @@ Buffer *http_url(const char *url)
 int main(int argc, char *argv[])
 {
     Buffer *res = http_query(argv[1], argv[2], 80);
-    printf("%s", res->data);
+    printf("Response:\n%s", res->data);
     return 0;
 }
