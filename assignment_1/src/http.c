@@ -59,15 +59,24 @@ Buffer *http_query(char *host, char *page, int port)
         perror("write");
         exit(EXIT_FAILURE);
     }
+    free(get_req);
 
     // return response
     Buffer *ret = malloc(sizeof(Buffer));
-    s = read(sockfd, ret->data, (size_t)1e6);
-    if (s == -1)
+    ret->data = malloc(0);
+    ret->length = 0;
+    do
     {
-        perror("read");
-        exit(EXIT_FAILURE);
-    }
+        ret->data = realloc(ret->data, ret->length + BUF_SIZE);
+        s = read(sockfd, ret->data + ret->length, BUF_SIZE);
+        if (s == -1)
+        {
+            perror("read");
+            exit(EXIT_FAILURE);
+        }
+        ret->length += s;
+    } while (s > 0);
+
     ret->length = s;
     return ret;
 }
@@ -112,5 +121,6 @@ Buffer *http_url(const char *url)
 int main(int argc, char *argv[])
 {
     Buffer *res = http_query(argv[1], argv[2], 80);
+    printf("%s", res->data);
     return 0;
 }
