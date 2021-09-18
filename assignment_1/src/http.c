@@ -47,6 +47,7 @@ Buffer *http_query(char *host, char *page, int port)
     if (connect(sockfd, server_addr->ai_addr, server_addr->ai_addrlen) == -1)
     {
         perror("connect");
+        close(sockfd);
         exit(EXIT_FAILURE);
     }
     freeaddrinfo(server_addr);
@@ -58,6 +59,7 @@ Buffer *http_query(char *host, char *page, int port)
     if (write(sockfd, get_req, header_len - 1) == -1)
     {
         perror("write");
+        close(sockfd);
         exit(EXIT_FAILURE);
     }
     free(get_req);
@@ -73,11 +75,13 @@ Buffer *http_query(char *host, char *page, int port)
         if (s == -1)
         {
             perror("read");
+            close(sockfd);
             exit(EXIT_FAILURE);
         }
         ret->length += s;
     } while (s > 0);
     memset(ret->data + ret->length, 0, ret->length % BUF_SIZE); // pad the data with zeros
+    close(sockfd);
     return ret;
 }
 

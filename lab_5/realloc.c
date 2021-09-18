@@ -8,38 +8,42 @@
 #include <unistd.h>
 #include <assert.h>
 
-
 #define handle_error(msg) \
-        do { perror(msg); exit(EXIT_FAILURE); } while (0)
+  do                      \
+  {                       \
+    perror(msg);          \
+    exit(EXIT_FAILURE);   \
+  } while (0)
 
-
-typedef struct {
+typedef struct
+{
   char *data;
-  
+
   size_t length;
   size_t reserved;
-  
-} Buffer;          
 
+} Buffer;
 
 /*
  * Create a new buffer, reserving an initial amount of memory
  * length starts at zero.
  * 
  */
- 
-Buffer *new_buffer(size_t reserved) {
-  /* TODO */
-  
-  assert(0 && "not implemented");
+
+Buffer *new_buffer(size_t reserved)
+{
+  Buffer *buf = malloc(sizeof(Buffer));
+  buf->reserved = reserved;
+  buf->length = 0;
+  buf->data = malloc(reserved);
+  return buf;
 }
 
-
-void free_buffer(Buffer *buffer) {
+void free_buffer(Buffer *buffer)
+{
   free(buffer->data);
   free(buffer);
 }
-
 
 /*
  * Append data to a buffer.
@@ -50,57 +54,63 @@ void free_buffer(Buffer *buffer) {
  * Finally, append the data to the end of the buffer and increase it's length.
  */
 
-
-void append_buffer(Buffer *buffer, char *data, size_t length) {
-  /* TODO */
-  
-  assert(0 && "not implemented");
+void append_buffer(Buffer *buffer, char *data, size_t length)
+{
+  if (buffer->reserved - buffer->length < length)
+  {
+    size_t new_reserved = 2 * buffer->reserved;
+    buffer->data = realloc(buffer->data, new_reserved);
+    buffer->reserved = new_reserved;
+  }
+  memcpy(buffer->data + buffer->length, data, length);
+  buffer->length += length;
 }
-    
 
-
-          
 int main(int argc, char *argv[])
 {
-  if(argc < 2) {
+  if (argc < 2)
+  {
     fprintf(stderr, "usage: realloc <repeats>\n");
     exit(EXIT_FAILURE);
   }
-  
+
   size_t repeats = atoi(argv[1]);
   size_t chunk_size = 1024;
-  
-  for(int i = 0; i < repeats; ++i) {
-  
+
+  for (int i = 0; i < repeats; ++i)
+  {
+
     FILE *src = fopen("test.dat", "r");
-    if (src == NULL) {
+    if (src == NULL)
+    {
       fprintf(stderr, "error opening test.dat");
       exit(EXIT_FAILURE);
     }
 
     FILE *dst = fopen("output.dat", "w");
-    if (dst == NULL) {
+    if (dst == NULL)
+    {
       fprintf(stderr, "error opening output.dat");
       exit(EXIT_FAILURE);
     }
-    
-    
+
     char *data = malloc(chunk_size);
     Buffer *buffer = new_buffer(chunk_size);
-    
+
     size_t bytes = 0;
-    while((bytes = fread(data, 1, chunk_size, src)) > 0) {
+    while ((bytes = fread(data, 1, chunk_size, src)) > 0)
+    {
       append_buffer(buffer, data, bytes);
     }
-    
+
     fwrite(buffer->data, buffer->length, 1, dst);
-    
+
     fclose(src);
     fclose(dst);
-    
+
     free(data);
     free_buffer(buffer);
   }
-  
+
   exit(EXIT_SUCCESS);
 }
