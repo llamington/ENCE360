@@ -121,12 +121,3 @@ Buffer *http_url(const char *url)
         return NULL;
     }
 }
-
-// int main(int argc, char *argv[])
-// {
-//     Buffer *res = http_query(argv[1], argv[2], 80);
-//     printf("Response:\n%s", res->data);
-//     free(res->data);
-//     free(res);
-//     return 0;
-// }
