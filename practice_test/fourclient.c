@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	// place your code between the lines of //
 	///////////////////////////////////////////////////////
 	close(sockfd);
-	// freeaddrinfo(their_addr);
+	freeaddrinfo(their_addr);
 	// freeaddrinfo(&their_addrinfo);
 	///////////////////////////////////////////////////////
 
