@@ -74,6 +74,25 @@ void queue_put(Queue *queue, void *item)
 
 void *queue_get(Queue *queue)
 {
+    // TODO: mutex?
 
-    assert(0 && "not implemented yet!");
+    if (sem_wait(&queue->items) == -1)
+        handle_error("sem_wait spaces");
+
+    void *res = queue->array[0];
+
+    // Get the number of items in queue
+    int num_items;
+    if (sem_getvalue(&queue->items, &num_items) == -1)
+        handle_error("sem_getvalue items");
+
+    // shift the queue positions of the other items forward 1
+    for (int i = 1; i <= num_items; i++)
+        queue->array[i - 1] = queue->array[i];
+
+    // increase the number of free spaces in the queue
+    if (sem_post(&queue->spaces) == -1)
+        handle_error("sem_post spaces");
+
+    return res;
 }
