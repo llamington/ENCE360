@@ -26,9 +26,10 @@
 typedef struct QueueStruct
 {
     void **array;
+    int length; // current length of queue
     sem_t items;
     sem_t spaces;
-
+    pthread_mutex_t lock;
 } Queue;
 
 Queue *queue_alloc(int size)
@@ -36,6 +37,9 @@ Queue *queue_alloc(int size)
     // allocate memory for the queue
     Queue *queue = malloc(sizeof(Queue));
     queue->array = malloc(size * sizeof(void *));
+    queue->length = 0;
+
+    pthread_mutex_init(&queue->lock, NULL);
 
     // initiliase items semaphore with 0
     if (sem_init(&queue->items, 0, 0) == -1)
@@ -61,13 +65,13 @@ void queue_put(Queue *queue, void *item)
     if (sem_wait(&queue->spaces) == -1)
         handle_error("sem_wait spaces");
 
-    // Get the number of items in queue
-    int num_items;
-    if (sem_getvalue(&queue->items, &num_items) == -1)
-        handle_error("sem_getvalue items");
+    pthread_mutex_lock(&queue->lock);
 
-    // add the item to the array
-    queue->array[num_items] = item;
+    // add the item to the array, incrementing the length
+    queue->array[queue->length++] = item;
+
+    pthread_mutex_unlock(&queue->lock);
+
     if (sem_post(&queue->items) == -1)
         handle_error("sem_post items");
 }
@@ -79,16 +83,16 @@ void *queue_get(Queue *queue)
     if (sem_wait(&queue->items) == -1)
         handle_error("sem_wait spaces");
 
+    pthread_mutex_lock(&queue->lock);
+
     void *res = queue->array[0];
 
-    // Get the number of items in queue
-    int num_items;
-    if (sem_getvalue(&queue->items, &num_items) == -1)
-        handle_error("sem_getvalue items");
-
-    // shift the queue positions of the other items forward 1
-    for (int i = 1; i <= num_items; i++)
+    // shift the queue positions towards the front by 1
+    for (int i = 1; i < queue->length; i++)
         queue->array[i - 1] = queue->array[i];
+    queue->length--;
+
+    pthread_mutex_unlock(&queue->lock);
 
     // increase the number of free spaces in the queue
     if (sem_post(&queue->spaces) == -1)
