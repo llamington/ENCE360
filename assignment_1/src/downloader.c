@@ -243,7 +243,7 @@ int main(int argc, char **argv)
     while (work > 0)
     {
         --work;
-        wait_task(download_dir, context);
+        wait_task(download_dir, context); // maybe can do this background?
     }
 
     //cleanup
