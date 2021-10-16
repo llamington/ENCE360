@@ -26,12 +26,13 @@
 typedef struct QueueStruct
 {
     void **array;
-    int length; // current length of queue
-    sem_t items;
-    sem_t spaces;
+    int length;   // current length of queue
+    sem_t items;  // number of items currently in the queue
+    sem_t spaces; // number of free spaces in the queue
     pthread_mutex_t lock;
 } Queue;
 
+// Initialise a thread-safe queue
 Queue *queue_alloc(int size)
 {
     // allocate memory for the queue
@@ -52,16 +53,17 @@ Queue *queue_alloc(int size)
     return queue;
 }
 
+// Free dynamically allocated memory associated with the queue
 void queue_free(Queue *queue)
 {
     free(queue->array);
     free(queue);
 }
 
+// Add an item to the queue
 void queue_put(Queue *queue, void *item)
 {
-    // TODO: mutex?
-
+    // wait for a free space in the queue
     if (sem_wait(&queue->spaces) == -1)
         handle_error("sem_wait spaces");
 
@@ -72,19 +74,22 @@ void queue_put(Queue *queue, void *item)
 
     pthread_mutex_unlock(&queue->lock);
 
+    // increment number of items in queue
     if (sem_post(&queue->items) == -1)
         handle_error("sem_post items");
 }
 
+// Get the item at the front of the queue
 void *queue_get(Queue *queue)
 {
-    // TODO: mutex?
 
+    // wait for queue to have an available item
     if (sem_wait(&queue->items) == -1)
         handle_error("sem_wait spaces");
 
     pthread_mutex_lock(&queue->lock);
 
+    // acquire the item at the head of the queue
     void *res = queue->array[0];
 
     // shift the queue positions towards the front by 1

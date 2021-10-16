@@ -13,9 +13,10 @@
 #define MAX_PORT_LEN 6 // maximum character length of a port including null byte
 #define HTTP_GET_FMT "GET /%s HTTP/1.0\r\n" \
                      "Host: %s\r\n"         \
-                     "User-Agent: getter\r\n\r\n"
-#define HTTP_HEADER_LEN 47 // length of http get template including null byte
+                     "User-Agent: getter\r\n\r\n" // format of a HTTP 1.0 request
+#define HTTP_HEADER_LEN 47                        // length of http get template including null byte
 
+// Make an HTTP query to the given host/page/port
 Buffer *http_query(char *host, char *page, int port)
 {
     // initialise server hints
