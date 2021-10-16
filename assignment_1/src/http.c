@@ -16,32 +16,15 @@
                      "User-Agent: getter\r\n\r\n" // format of a HTTP 1.0 request
 #define HTTP_HEADER_LEN 47                        // length of http get template including null byte
 
+Buffer *get_http_response(int sockfd);
+struct addrinfo *get_server_addrinfo(char *host, int port);
+
 // Make an HTTP query to the given host/page/port
 Buffer *http_query(char *host, char *page, int port)
 {
-    // initialise server hints
-    struct addrinfo server_hints;
-    memset(&server_hints, 0, sizeof(server_hints));
-    server_hints.ai_family = AF_INET;
-    server_hints.ai_socktype = SOCK_STREAM;
-
-    // convert port to string
-    char port_str[MAX_PORT_LEN];
-    int s = snprintf(port_str, MAX_PORT_LEN, "%d", port);
-    if (s < 0 || s > MAX_PORT_LEN)
-    {
-        perror("port");
-        exit(EXIT_FAILURE);
-    }
 
     // retrieve server address
-    struct addrinfo *server_addr = NULL;
-    s = getaddrinfo(host, port_str, &server_hints, &server_addr);
-    if (s != 0)
-    {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-        exit(EXIT_FAILURE);
-    }
+    struct addrinfo *server_addr = get_server_addrinfo(host, port);
 
     // connect to server
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -65,12 +48,51 @@ Buffer *http_query(char *host, char *page, int port)
     }
     free(get_req);
 
-    // store response
+    return get_http_response(sockfd);
+}
+
+// Get the addrinfo struct for the given server
+struct addrinfo *get_server_addrinfo(char *host, int port)
+{
+    // initialise server hints
+    struct addrinfo server_hints;
+    memset(&server_hints, 0, sizeof(server_hints));
+    server_hints.ai_family = AF_INET;
+    server_hints.ai_socktype = SOCK_STREAM;
+
+    // convert port to string
+    char port_str[MAX_PORT_LEN];
+    int s = snprintf(port_str, MAX_PORT_LEN, "%d", port);
+    if (s < 0 || s > MAX_PORT_LEN)
+    {
+        perror("port");
+        exit(EXIT_FAILURE);
+    }
+
+    // get server address
+    struct addrinfo *server_addr = NULL;
+    s = getaddrinfo(host, port_str, &server_hints, &server_addr);
+    if (s != 0)
+    {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+        exit(EXIT_FAILURE);
+    }
+
+    return server_addr;
+}
+
+// Returns a pointer to an HTTP response buffer
+Buffer *get_http_response(int sockfd)
+{
+    // initialise buffer
     Buffer *ret = malloc(sizeof(Buffer));
     ret->data = malloc(0);
     ret->length = 0;
+    int s;
+
     do
     {
+        // write response into buffer
         ret->data = realloc(ret->data, ret->length + BUF_SIZE);
         s = read(sockfd, ret->data + ret->length, BUF_SIZE);
         if (s == -1)
@@ -81,8 +103,8 @@ Buffer *http_query(char *host, char *page, int port)
         }
         ret->length += s;
     } while (s > 0);
+
     memset(ret->data + ret->length, 0, ret->length % BUF_SIZE); // pad the data with zeros
-    close(sockfd);
     return ret;
 }
 
