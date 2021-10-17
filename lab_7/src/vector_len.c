@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     if (world_rank == 0) {
         srand48(0);
 
-        rand_nums = alloc_vec(elems_proc * world_size);
+        rand_nums = alloc_vec(elems_proc * world_size);  // ensure equal size blocks
         random_vec(rand_nums, total_elems);
     }
 
@@ -100,20 +100,14 @@ int main(int argc, char** argv) {
     double total = 0.0;
 
     //TODO: Replace MPI_Reduce with MPI_Gather impelemtation
-    MPI_Reduce(&local_len, &total, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-
-
-
-
-
+    // MPI_Reduce(&local_len, &total, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     
-    
-    
-    
-    
-    
+    double* recv_buf = alloc_vec(world_size);
+    MPI_Gather(&local_len, 1, MPI_DOUBLE, recv_buf, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    total = compute_sum(recv_buf, world_size);
+
+
     
     // Stop the clock
     clock_gettime(CLOCK_REALTIME, &stop);
