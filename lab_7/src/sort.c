@@ -120,7 +120,8 @@ float *merge_tree(int *result_size, float *sub_vec, int n1, int step) {
             // Recieve the length of the vector, allocate space for it and recieve it
             int n2 = 0;
             float *other_vec = NULL;
-
+            MPI_Recv(&n2, 1, MPI_INT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(other_vec, n2, MPI_FLOAT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
             // Merge the two sub vectors together
             float *merged = merge_alloc(sub_vec, n1, other_vec, n2);
@@ -139,8 +140,9 @@ float *merge_tree(int *result_size, float *sub_vec, int n1, int step) {
         //TODO: Implement me
         // Send the length of the vector, followed by the data
         int dest = rank - step / 2;
-        dest = dest; // Unneccessary: remove compiler warning
-
+        
+        MPI_Send(&n1, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);
+        MPI_Send(sub_vec, n1, MPI_FLOAT, dest, 0, MPI_COMM_WORLD);
 
 
         //Free memory no longer needed
@@ -224,6 +226,7 @@ int main(int argc, char** argv) {
 
     // Scatter the random numbers to all processes
     //TODO: Implement me
+    MPI_Scatter(rand_nums, elems_proc, MPI_FLOAT, sub_rand_nums, elems_proc, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
     // Use quicksort to sort the vectors at the local nodes
     qsort(sub_rand_nums, local_size, sizeof(float), compare);
