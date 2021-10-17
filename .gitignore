@@ -6,4 +6,5 @@
 !Makefile
 *.o
 *.dat
+!remote_hosts
 download/

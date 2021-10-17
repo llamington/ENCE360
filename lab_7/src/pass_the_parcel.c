@@ -28,8 +28,14 @@ int main(int argc, char** argv) {
         MPI_Send(&value, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);
     }
 
-    //TODO: Implement me
-
+    MPI_Status s;
+    MPI_Recv(&value, 1, MPI_INT, src, 0, MPI_COMM_WORLD, &s);
+    printf("%d: received value %d from process %d\n", world_rank, value, src);
+    value++;
+    if (world_rank != 0) {
+        MPI_Send(&value, 1, MPI_INT, dest, 0,  MPI_COMM_WORLD);
+        printf("%d: sending value %d to process %d\n", world_rank, value, dest);
+    }
     // Cleanup
     MPI_Finalize();
     return 0;
