@@ -16,14 +16,25 @@ int main(int argc, char *argv[])
         exit();
     }
 
-    // TODO:
-    //----------------Remove this----------------
-    src_fd = 0;
-    dest_fd = 0;
-    src_fd = src_fd;
-    dest_fd = dest_fd;
-    //----Only here to stop compiler warnings----
+    src_fd = open(argv[1], O_RDONLY);
+    dest_fd = open(argv[2], O_WRONLY | O_CREATE);
 
+    int s;
+    do {
+        s = read(src_fd, buf, 512);
+        if(s == -1) {
+            printf(1, "cp: read error\n");
+            exit();
+        }
+        
+        s = write(dest_fd, buf, s);
+        if(s == -1) {
+            printf(1, "cp: write error\n");
+            exit();
+        }
+
+
+    } while(s > 0);
 
     exit();
 }
